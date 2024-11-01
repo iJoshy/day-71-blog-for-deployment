@@ -15,12 +15,28 @@ from forms import CreatePostForm, RegisterForm, LoginForm, CommentForm
 import os
 
 
+username = os.getenv("USERNAME")
+password = os.getenv("PASSWORD")
+hostname = os.getenv("HOSTNAME")
+databasename = os.getenv("DATABASENAME")
+
+
 app = Flask(__name__)
-# app.config['SECRET_KEY'] = '8BYkEfBA6O6donzWlSihBXox7C0sKR6b'
-app.config['SECRET_KEY'] = os.environ.get('FLASK_KEY')
+app.config['SECRET_KEY'] = os.getenv("FLASK_KEY")
+# For adding profile images to the comment section
+gravatar = Gravatar(app, size=100, rating='g', default='retro', force_default=False, force_lower=False, use_ssl=False, base_url=None)
+
+# CREATE DATABASE
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///posts.db")
+SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://{username}:{password}@{hostname}/{databasename}"
+app.config["SQLALCHEMY_DATABASE_URI"] = SQLALCHEMY_DATABASE_URI
+app.config["SQLALCHEMY_POOL_RECYCLE"] = 299
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app)
+
 ckeditor = CKEditor(app)
 Bootstrap5(app)
-
 # Configure Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -29,28 +45,6 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(user_id):
     return db.get_or_404(User, user_id)
-
-
-# For adding profile images to the comment section
-gravatar = Gravatar(app,
-                    size=100,
-                    rating='g',
-                    default='retro',
-                    force_default=False,
-                    force_lower=False,
-                    use_ssl=False,
-                    base_url=None)
-
-
-# CREATE DATABASE
-class Base(DeclarativeBase):
-    pass
-
-
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DB_URI", "sqlite:///posts.db")
-db = SQLAlchemy(model_class=Base)
-db.init_app(app)
 
 
 # CONFIGURE TABLES
